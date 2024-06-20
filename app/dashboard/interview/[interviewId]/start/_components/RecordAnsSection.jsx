@@ -118,13 +118,6 @@ function RecordAnsSection({
           "Record Answer"
         )}
       </button>
-
-      <button
-        className="bg-blue-900 text-white my-10 p-3 rounded-lg hover:bg-slate-500 "
-        onClick={() => console.log(userAnswer)}
-      >
-        Submit Answer
-      </button>
     </div>
   );
 }
