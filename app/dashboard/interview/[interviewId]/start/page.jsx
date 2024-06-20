@@ -42,6 +42,29 @@ function StartInterview({ params }) {
           interviewData={interviewData}
         />
       </div>
+      <div className="flex justify-end gap-6">
+        {activeQuestion > 0 && (
+          <button
+            className="bg-blue-900 text-white p-3 rounded-lg hover:bg-slate-500 "
+            onClick={() => setActiveQuestion(activeQuestion - 1)}
+          >
+            Previuos Quesion
+          </button>
+        )}
+        {activeQuestion !== interviewQuestions?.length - 1 && (
+          <button
+            className="bg-blue-900 text-white p-3 rounded-lg hover:bg-slate-500 "
+            onClick={() => setActiveQuestion(activeQuestion + 1)}
+          >
+            Next Quesion
+          </button>
+        )}
+        {activeQuestion === interviewQuestions?.length - 1 && (
+          <button className="bg-blue-900 text-white p-3 rounded-lg hover:bg-slate-500 ">
+            End Interview
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { use, useEffect } from "react";
 import Webcam from "react-webcam";
 import Image from "next/image";
 import useSpeechToText from "react-hook-speech-to-text";
@@ -31,45 +31,42 @@ function RecordAnsSection({
     useLegacyResults: false,
   });
 
-  const saveUserAnswser = async () => {
+  const updateUserAnswer = async () => {
+    setLoading(true);
+    const feedbackPrompt =
+      "Question :" +
+      interviewQuestions[activeQuestion]?.Question +
+      ", Answer : " +
+      userAnswer +
+      ", Depending on question and user answer for give interview question please give us  rating for and feedback as area of imporvement if any in just three to five lines to imporve it in JSON format with rating field and feedback field";
+    const result = await chatSession.sendMessage(feedbackPrompt);
+    const mockJsonResponse = result.response
+      .text()
+      .replace("```json", "")
+      .replace("```", "");
+    console.log(mockJsonResponse, "mockJsonResponse");
+
+    const jsonFeeedbackResponse = JSON.parse(mockJsonResponse);
+
+    const res = await db.insert(UserAnswer).values({
+      question: interviewQuestions[activeQuestion]?.Question,
+      userAnswer: userAnswer,
+      correctAnswer: interviewQuestions[activeQuestion]?.Answer,
+      feedback: jsonFeeedbackResponse?.feedback,
+      rating: jsonFeeedbackResponse?.rating,
+      userEmail: user?.primaryEmailAddress?.emailAddress,
+      createdAt: moment().format("YYYY-MM-DD"),
+      mockIdRef: interviewData?.mockInterviewId,
+    });
+
+    alert("Answer Recorded Successfully");
+    setUserAnswer("");
+    setLoading(false);
+  };
+
+  const startStopRecording = async () => {
     if (isRecording) {
-      setLoading(true);
       stopSpeechToText();
-      if (userAnswer?.length < 10) {
-        setLoading(false);
-        alert("Please speak more than 10 words");
-        return;
-      }
-
-      const feedbackPrompt =
-        "Question :" +
-        interviewQuestions[activeQuestion]?.Question +
-        ", Answer : " +
-        userAnswer +
-        ", Depending on question and user answer for give interview question please give us  rating for and feedback as area of imporvement if any in just three to five lines to imporve it in JSON format with rating field and feedback field";
-      const result = await chatSession.sendMessage(feedbackPrompt);
-      const mockJsonResponse = result.response
-        .text()
-        .replace("```json", "")
-        .replace("```", "");
-      console.log(mockJsonResponse, "mockJsonResponse");
-
-      const jsonFeeedbackResponse = JSON.parse(mockJsonResponse);
-
-      const res = await db.insert(UserAnswer).values({
-        question: interviewQuestions[activeQuestion]?.Question,
-        userAnswer: userAnswer,
-        correctAnswer: interviewQuestions[activeQuestion]?.Answer,
-        feedback: jsonFeeedbackResponse?.feedback,
-        rating: jsonFeeedbackResponse?.rating,
-        userEmail: user?.primaryEmailAddress?.emailAddress,
-        createdAt: moment().format("YYYY-MM-DD"),
-        mockIdRef: interviewData?.mockInterviewId,
-      });
-
-      alert("Answer Recorded Successfully");
-      setUserAnswer("");
-      setLoading(false);
     } else {
       startSpeechToText();
     }
@@ -80,6 +77,13 @@ function RecordAnsSection({
       setUserAnswer((prevAns) => prevAns + result?.transcript);
     });
   }, [results]);
+
+  useEffect(() => {
+    if (!isRecording && userAnswer.length > 10) {
+      updateUserAnswer();
+    }
+  }, [userAnswer]);
+
   return (
     <div className="flex flex-col  items-center justify-center">
       <div className="flex flex-col justify-center  items-center bg-blue-100    rounded-lg p-5 mt-20 ">
@@ -103,7 +107,7 @@ function RecordAnsSection({
       <button
         disabled={loading}
         className="bg-blue-900 text-white my-10 p-3 rounded-lg hover:bg-slate-500 "
-        onClick={saveUserAnswser}
+        onClick={startStopRecording}
       >
         {isRecording ? (
           <h2 className="flex gap-2 text-red-500">
